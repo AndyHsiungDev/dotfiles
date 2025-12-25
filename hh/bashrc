@@ -1,0 +1,24 @@
+# hstr (hh) configuration for bash
+# Add this to your ~/.bashrc or source this file
+
+# Bind hstr to Ctrl+r
+export HSTR_CONFIG=hicolor,raw-history-view
+bind '"\C-r": "\C-a hstr -- \C-j"'
+
+# Use hstr for history navigation
+export HSTR_CONFIG=hicolor,raw-history-view,keywords,blacklist,regexp,favorites,bookmarks,duplicates,case-sensitive
+
+# Alternative: Use hh alias
+alias hh=hstr
+
+# If hstr is installed, configure it
+if command -v hstr &> /dev/null; then
+    # Set hstr configuration file location
+    export HSTR_CONFIG=hicolor,raw-history-view
+    
+    # Bind Ctrl+r to hstr
+    bind '"\C-r": "\C-a hstr -- \C-j"'
+    
+    # Use hstr for history navigation
+    export HSTR_CONFIG=hicolor,raw-history-view,keywords,blacklist,regexp,favorites,bookmarks,duplicates,case-sensitive
+fi

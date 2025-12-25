@@ -1,0 +1,356 @@
+# hstr (hh) configuration file
+# This file contains hstr-specific settings
+
+# Show case sensitive matches
+case-sensitive=false
+
+# Show duplicates
+duplicates=true
+
+# Show blacklist
+blacklist=true
+
+# Show favorites
+favorites=true
+
+# Show keywords
+keywords=true
+
+# Show bookmarks
+bookmarks=true
+
+# Show regexp
+regexp=true
+
+# Show raw history
+raw=false
+
+# Show timestamps
+timestamps=false
+
+# Show help
+help=true
+
+# Show version
+version=false
+
+# Show configuration
+config=false
+
+# Show statistics
+stats=false
+
+# Show history file
+history-file=
+
+# Show history size
+history-size=10000
+
+# Show prompt
+prompt="> "
+
+# Show prompt color
+prompt-color=bold
+
+# Show prompt background
+prompt-bg=
+
+# Show prompt foreground
+prompt-fg=
+
+# Show selected color
+selected-color=bold
+
+# Show selected background
+selected-bg=cyan
+
+# Show selected foreground
+selected-fg=black
+
+# Show matched color
+matched-color=bold
+
+# Show matched background
+matched-bg=green
+
+# Show matched foreground
+matched-fg=black
+
+# Show keyword color
+keyword-color=bold
+
+# Show keyword background
+keyword-bg=yellow
+
+# Show keyword foreground
+keyword-fg=black
+
+# Show favorites color
+favorites-color=bold
+
+# Show favorites background
+favorites-bg=magenta
+
+# Show favorites foreground
+favorites-fg=black
+
+# Show bookmarks color
+bookmarks-color=bold
+
+# Show bookmarks background
+bookmarks-bg=blue
+
+# Show bookmarks foreground
+bookmarks-fg=black
+
+# Show regexp color
+regexp-color=bold
+
+# Show regexp background
+regexp-bg=red
+
+# Show regexp foreground
+regexp-fg=black
+
+# Show blacklist color
+blacklist-color=bold
+
+# Show blacklist background
+blacklist-bg=white
+
+# Show blacklist foreground
+blacklist-fg=black
+
+# Show duplicates color
+duplicates-color=bold
+
+# Show duplicates background
+duplicates-bg=white
+
+# Show duplicates foreground
+duplicates-fg=black
+
+# Show timestamps color
+timestamps-color=bold
+
+# Show timestamps background
+timestamps-bg=white
+
+# Show timestamps foreground
+timestamps-fg=black
+
+# Show raw color
+raw-color=bold
+
+# Show raw background
+raw-bg=white
+
+# Show raw foreground
+raw-fg=black
+
+# Show help color
+help-color=bold
+
+# Show help background
+help-bg=white
+
+# Show help foreground
+help-fg=black
+
+# Show version color
+version-color=bold
+
+# Show version background
+version-bg=white
+
+# Show version foreground
+version-fg=black
+
+# Show config color
+config-color=bold
+
+# Show config background
+config-bg=white
+
+# Show config foreground
+config-fg=black
+
+# Show stats color
+stats-color=bold
+
+# Show stats background
+stats-bg=white
+
+# Show stats foreground
+stats-fg=black
+
+# Show history file color
+history-file-color=bold
+
+# Show history file background
+history-file-bg=white
+
+# Show history file foreground
+history-file-fg=black
+
+# Show history size color
+history-size-color=bold
+
+# Show history size background
+history-size-bg=white
+
+# Show history size foreground
+history-size-fg=black
+
+# Show prompt color
+prompt-color=bold
+
+# Show prompt background
+prompt-bg=white
+
+# Show prompt foreground
+prompt-fg=black
+
+# Show selected color
+selected-color=bold
+
+# Show selected background
+selected-bg=cyan
+
+# Show selected foreground
+selected-fg=black
+
+# Show matched color
+matched-color=bold
+
+# Show matched background
+matched-bg=green
+
+# Show matched foreground
+matched-fg=black
+
+# Show keyword color
+keyword-color=bold
+
+# Show keyword background
+keyword-bg=yellow
+
+# Show keyword foreground
+keyword-fg=black
+
+# Show favorites color
+favorites-color=bold
+
+# Show favorites background
+favorites-bg=magenta
+
+# Show favorites foreground
+favorites-fg=black
+
+# Show bookmarks color
+bookmarks-color=bold
+
+# Show bookmarks background
+bookmarks-bg=blue
+
+# Show bookmarks foreground
+bookmarks-fg=black
+
+# Show regexp color
+regexp-color=bold
+
+# Show regexp background
+regexp-bg=red
+
+# Show regexp foreground
+regexp-fg=black
+
+# Show blacklist color
+blacklist-color=bold
+
+# Show blacklist background
+blacklist-bg=white
+
+# Show blacklist foreground
+blacklist-fg=black
+
+# Show duplicates color
+duplicates-color=bold
+
+# Show duplicates background
+duplicates-bg=white
+
+# Show duplicates foreground
+duplicates-fg=black
+
+# Show timestamps color
+timestamps-color=bold
+
+# Show timestamps background
+timestamps-bg=white
+
+# Show timestamps foreground
+timestamps-fg=black
+
+# Show raw color
+raw-color=bold
+
+# Show raw background
+raw-bg=white
+
+# Show raw foreground
+raw-fg=black
+
+# Show help color
+help-color=bold
+
+# Show help background
+help-bg=white
+
+# Show help foreground
+help-fg=black
+
+# Show version color
+version-color=bold
+
+# Show version background
+version-bg=white
+
+# Show version foreground
+version-fg=black
+
+# Show config color
+config-color=bold
+
+# Show config background
+config-bg=white
+
+# Show config foreground
+config-fg=black
+
+# Show stats color
+stats-color=bold
+
+# Show stats background
+stats-bg=white
+
+# Show stats foreground
+stats-fg=black
+
+# Show history file color
+history-file-color=bold
+
+# Show history file background
+history-file-bg=white
+
+# Show history file foreground
+history-file-fg=black
+
+# Show history size color
+history-size-color=bold
+
+# Show history size background
+history-size-bg=white
+
+# Show history size foreground
+history-size-fg=black
