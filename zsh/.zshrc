@@ -71,7 +71,7 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git vi-mode)
+plugins=(git) # vi-mode
 
 source $ZSH/oh-my-zsh.sh
 
@@ -122,7 +122,7 @@ export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 . "$HOME/.local/bin/env"
 
 # Vim mode cursor setting
-VI_MODE_SET_CURSOR=true
+# VI_MODE_SET_CURSOR=true
 
 # Bind hstr to Ctrl-r
 bindkey -s "\C-r" "\e^ihstr -- \n"
