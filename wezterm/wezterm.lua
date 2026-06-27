@@ -5,6 +5,23 @@ local config = wezterm.config_builder()
 local is_windows = os.getenv("OS") and os.getenv("OS"):lower():find("windows")
 local is_macos = wezterm.target_triple:lower():find("darwin") ~= nil
 
+wezterm.on("gui-startup", function(cmd)
+  local tab, pane, window = wezterm.mux.spawn_window(cmd or {})
+  pane:split({ direction = "Right" })
+end)
+
+local function split_new_tab(window, pane)
+  local tab, new_pane, _ = window:mux_window():spawn_tab({})
+  new_pane:split({ direction = "Right" })
+end
+
+wezterm.on("new-tab-button-click", function(window, pane, button, default_action)
+  if button == "Left" then
+    split_new_tab(window, pane)
+    return false
+  end
+end)
+
 config.color_scheme = "rose-pine-moon"
 config.max_fps = 120
 config.font = wezterm.font("Hack Nerd Font", { weight = "DemiBold" })
@@ -15,6 +32,13 @@ config.window_frame = {
 config.inactive_pane_hsb = {
   saturation = 0.0,
   brightness = 0.5,
+}
+config.keys = {
+  {
+    key = "t",
+    mods = "CMD",
+    action = wezterm.action_callback(split_new_tab),
+  },
 }
 
 if is_windows then
