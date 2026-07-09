@@ -22,7 +22,7 @@ wezterm.on("new-tab-button-click", function(window, pane, button, default_action
   end
 end)
 
-config.color_scheme = "Darcula (base16)"
+config.color_scheme = "Darcula base16)"
 config.max_fps = 120
 config.font = wezterm.font("Monaco")
 config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
@@ -38,6 +38,26 @@ config.keys = {
     key = "t",
     mods = "CMD",
     action = wezterm.action_callback(split_new_tab),
+  },
+  {
+    key = "s",
+    mods = "CMD",
+    action = wezterm.action.PaneSelect,
+  },
+  {
+    key = "d",
+    mods = "CMD",
+    action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }),
+  },
+  {
+    key = "w",
+    mods = "CMD",
+    action = wezterm.action.CloseCurrentPane({ confirm = true }),
+  },
+  {
+    key = "p",
+    mods = "CMD",
+    action = wezterm.action.ActivatePaneDirection("Next"),
   },
 }
 
