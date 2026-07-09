@@ -22,7 +22,7 @@ wezterm.on("new-tab-button-click", function(window, pane, button, default_action
   end
 end)
 
-config.color_scheme = "rose-pine-moon"
+config.color_scheme = "Darcula (base16)"
 config.max_fps = 120
 config.font = wezterm.font("Monaco")
 config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
