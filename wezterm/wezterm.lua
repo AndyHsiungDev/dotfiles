@@ -10,19 +10,70 @@ wezterm.on("gui-startup", function(cmd)
   pane:split({ direction = "Right" })
 end)
 
-local function split_new_tab(window, pane)
-  local tab, new_pane, _ = window:mux_window():spawn_tab({})
-  new_pane:split({ direction = "Right" })
+-- iTerm "Default" profile equivalent: shared ANSI palette, auto light/dark switch
+local ansi = {
+  "#14191e", -- black
+  "#b43c2a", -- red
+  "#00c200", -- green
+  "#c7c400", -- yellow
+  "#2744c7", -- blue
+  "#c040be", -- magenta
+  "#00c5c7", -- cyan
+  "#c7c7c7", -- white
+}
+local brights = {
+  "#686868", -- bright black
+  "#dd7975", -- bright red
+  "#58e790", -- bright green
+  "#ece100", -- bright yellow
+  "#a7abf2", -- bright blue
+  "#e17ee1", -- bright magenta
+  "#60fdff", -- bright cyan
+  "#ffffff", -- bright white
+}
+
+config.color_schemes = {
+  ["iTermDefault Dark"] = {
+    foreground = "#dcdcdc",
+    background = "#15191f",
+    cursor_bg = "#ffffff",
+    cursor_fg = "#000000",
+    cursor_border = "#ffffff",
+    selection_bg = "#b3d7ff",
+    selection_fg = "#101010",
+    ansi = ansi,
+    brights = brights,
+  },
+  ["iTermDefault Light"] = {
+    foreground = "#101010",
+    background = "#fafafa",
+    cursor_bg = "#000000",
+    cursor_fg = "#ffffff",
+    cursor_border = "#000000",
+    selection_bg = "#b3d7ff",
+    selection_fg = "#101010",
+    ansi = ansi,
+    brights = brights,
+  },
+}
+
+local function scheme_for_appearance(appearance)
+  if appearance:find("Dark") then
+    return "iTermDefault Dark"
+  end
+  return "iTermDefault Light"
 end
 
-wezterm.on("new-tab-button-click", function(window, pane, button, default_action)
-  if button == "Left" then
-    split_new_tab(window, pane)
-    return false
+wezterm.on("window-config-reloaded", function(window)
+  local overrides = window:get_config_overrides() or {}
+  local scheme = scheme_for_appearance(window:get_appearance())
+  if overrides.color_scheme ~= scheme then
+    overrides.color_scheme = scheme
+    window:set_config_overrides(overrides)
   end
 end)
 
-config.color_scheme = "Darcula base16)"
+config.color_scheme = scheme_for_appearance(wezterm.gui and wezterm.gui.get_appearance() or "Dark")
 config.max_fps = 120
 config.font = wezterm.font("Monaco")
 config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
@@ -37,7 +88,7 @@ config.keys = {
   {
     key = "t",
     mods = "CMD",
-    action = wezterm.action_callback(split_new_tab),
+    action = wezterm.action.SpawnTab("CurrentPaneDomain"),
   },
   {
     key = "s",
