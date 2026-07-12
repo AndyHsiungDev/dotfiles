@@ -84,33 +84,82 @@ config.inactive_pane_hsb = {
   saturation = 0.0,
   brightness = 0.5,
 }
-config.keys = {
+-- Single source of truth for custom key bindings. Each entry has a `desc`
+-- so the cheat-sheet (CMD+/) stays in sync automatically.
+local key_bindings = {
   {
     key = "t",
     mods = "CMD",
+    desc = "New tab",
     action = wezterm.action.SpawnTab("CurrentPaneDomain"),
   },
   {
     key = "s",
     mods = "CMD",
+    desc = "Select pane",
     action = wezterm.action.PaneSelect,
   },
   {
     key = "d",
     mods = "CMD",
+    desc = "Split pane horizontally",
     action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }),
   },
   {
     key = "w",
     mods = "CMD",
+    desc = "Close current pane",
     action = wezterm.action.CloseCurrentPane({ confirm = true }),
   },
   {
     key = "p",
     mods = "CMD",
+    desc = "Activate next pane",
     action = wezterm.action.ActivatePaneDirection("Next"),
   },
+  {
+    key = "e",
+    mods = "CMD",
+    desc = "Rename current tab",
+    action = wezterm.action.PromptInputLine({
+      description = "Enter new name for tab",
+      action = wezterm.action_callback(function(window, pane, line)
+        if line then
+          window:active_tab():set_title(line)
+        end
+      end),
+    }),
+  },
 }
+
+-- Build a searchable cheat-sheet from the bindings above. Selecting an entry
+-- runs its action; type to fuzzy-filter, Esc to dismiss.
+local function keymap_cheatsheet()
+  local choices = {}
+  for _, b in ipairs(key_bindings) do
+    table.insert(choices, {
+      id = tostring(#choices + 1),
+      label = string.format("%-14s  %s", b.mods .. "+" .. b.key, b.desc),
+    })
+  end
+  return wezterm.action.InputSelector({
+    title = "Keybindings",
+    fuzzy = true,
+    choices = choices,
+    action = wezterm.action_callback(function(window, pane, id)
+      if id then
+        window:perform_action(key_bindings[tonumber(id)].action, pane)
+      end
+    end),
+  })
+end
+
+config.keys = key_bindings
+table.insert(config.keys, {
+  key = "/",
+  mods = "CMD",
+  action = keymap_cheatsheet(),
+})
 
 if is_windows then
   config.win32_system_backdrop = "Acrylic"
