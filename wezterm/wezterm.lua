@@ -75,10 +75,10 @@ end)
 
 config.color_scheme = scheme_for_appearance(wezterm.gui and wezterm.gui.get_appearance() or "Dark")
 config.max_fps = 120
-config.font = wezterm.font("Monaco")
+config.font = wezterm.font("JetBrains Mono")
 config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
 config.window_frame = {
-  font = wezterm.font("Monaco"),
+  font = wezterm.font("JetBrains Mono"),
 }
 config.inactive_pane_hsb = {
   saturation = 0.0,
@@ -160,6 +160,62 @@ table.insert(config.keys, {
   mods = "CMD",
   action = keymap_cheatsheet(),
 })
+
+-- Claude Code attention dot: shows a red ● beside a tab whose Claude session
+-- needs attention (waiting for input, or finished its turn). Driven by per-pane
+-- marker files that the Notification/Stop/SessionEnd hooks in ~/.claude/settings.json
+-- write; auto-clears when the tab is focused. See github.com/pro-vi/wezterm-attention.
+-- Marker plugin runs in "manual" renderer mode so we own the tab-title rendering:
+-- the plugin's built-in renderer only tints the tab background, but we want a
+-- readable foreground per state too. The plugin still polls the per-pane marker
+-- files that the Claude hooks write, and exposes get_attention/remove_marker.
+local attention = wezterm.plugin.require("https://github.com/pro-vi/wezterm-attention")
+attention.apply_to_config(config, { renderer = "manual" })
+
+-- The plugin re-reads marker files on update-status, which fires every
+-- status_update_interval ms (default 1000). The attention sound is instant, so at
+-- the default the tab lags the sound by up to ~1s; poll ~4x/sec to keep them tight.
+config.status_update_interval = 250
+
+-- Google Material palette per attention state: { bg tint, readable fg }.
+local ATTENTION_STYLE = {
+  thinking = { bg = "#4285F4", fg = "#ffffff" }, -- Google Blue:   working
+  stop = { bg = "#34A853", fg = "#ffffff" }, --     Google Green:  finished
+  notify = { bg = "#FBBC05", fg = "#000000" }, --   Google Yellow: needs input
+  review = { bg = "#EA4335", fg = "#ffffff" }, --   Google Red:    flagged (ALT+b)
+}
+-- When a tab's panes disagree, the higher number wins: notify > stop > review > thinking.
+local ATTENTION_PRIORITY = { thinking = 1, review = 2, stop = 3, notify = 4 }
+-- States that clear when you focus the tab (mirrors the plugin's default auto_clear).
+local ATTENTION_AUTO_CLEAR = { stop = true, notify = true }
+
+wezterm.on("format-tab-title", function(tab)
+  local best
+  for _, p in ipairs(tab.panes) do
+    local atype = attention.get_attention(p.pane_id)
+    if atype and tab.is_active and ATTENTION_AUTO_CLEAR[atype] then
+      attention.remove_marker(p.pane_id) -- viewing the tab clears it
+      atype = nil
+    end
+    if atype and (not best or ATTENTION_PRIORITY[atype] > ATTENTION_PRIORITY[best]) then
+      best = atype
+    end
+  end
+
+  -- Honor a custom name set via CMD+e (tab.tab_title); else the active pane title.
+  local base = (tab.tab_title and #tab.tab_title > 0) and tab.tab_title or tab.active_pane.title
+  local index = tab.tab_index + 1
+  local style = best and ATTENTION_STYLE[best]
+
+  if style then
+    return {
+      { Background = { Color = style.bg } },
+      { Foreground = { Color = style.fg } },
+      { Text = " ● " .. index .. ": " .. base .. " " },
+    }
+  end
+  return " " .. index .. ": " .. base .. " "
+end)
 
 if is_windows then
   config.win32_system_backdrop = "Acrylic"

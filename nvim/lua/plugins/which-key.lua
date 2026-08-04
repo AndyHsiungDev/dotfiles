@@ -6,6 +6,9 @@ return {
     event = "VeryLazy",
     opts = {
       preset = "modern",
+      spec = {
+        { "<leader>y", group = "Yank" },
+      },
     },
     keys = {
       {

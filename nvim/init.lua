@@ -16,6 +16,9 @@ vim.g.maplocalleader = " "
 -- Bootstrap the plugin manager and load everything under lua/plugins/.
 require("config.lazy")
 
+-- Custom keymaps not tied to any single plugin.
+require("config.keymaps")
+
 -- Diagnostics UI: inline virtual text, signs in the gutter, and rounded borders.
 vim.diagnostic.config({
   virtual_text = { prefix = "●" },

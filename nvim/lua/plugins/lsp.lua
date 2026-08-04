@@ -19,13 +19,13 @@ return {
       end
       vim.lsp.config("*", { capabilities = capabilities })
 
-      -- basedpyright: default to "standard" (its out-of-the-box "recommended"
+      -- basedpyright: default to "basic" (its out-of-the-box "recommended"
       -- mode is extremely strict and noisy for most codebases).
       vim.lsp.config("basedpyright", {
         settings = {
           basedpyright = {
             analysis = {
-              typeCheckingMode = "standard",
+              typeCheckingMode = "basic",
               diagnosticMode = "openFilesOnly",
               autoImportCompletions = true,
             },
