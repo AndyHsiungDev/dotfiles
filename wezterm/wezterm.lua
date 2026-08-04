@@ -179,7 +179,7 @@ config.status_update_interval = 250
 
 -- Google Material palette per attention state: { bg tint, readable fg }.
 local ATTENTION_STYLE = {
-  thinking = { bg = "#4285F4", fg = "#ffffff" }, -- Google Blue:   working
+  thinking = { bg = "rgba(66,133,244,0.28)", fg = "#c9d6ee" }, -- Google Blue (muted): working
   stop = { bg = "#34A853", fg = "#ffffff" }, --     Google Green:  finished
   notify = { bg = "#FBBC05", fg = "#000000" }, --   Google Yellow: needs input
   review = { bg = "#EA4335", fg = "#ffffff" }, --   Google Red:    flagged (ALT+b)
