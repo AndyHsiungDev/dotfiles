@@ -9,7 +9,7 @@ Personal WezTerm setup. Highlights of the customizations in `wezterm.lua`:
   - **Green** `#34A853` - Claude finished its turn
   - **Blue** `#4285F4` - working (only if a `PreToolUse` hook is added)
   - **Red** `#EA4335` - manually flagged with `ALT+b`
-- Plays the macOS **Hero** sound when Claude needs input.
+- Plays the macOS **Glass** sound when Claude needs input.
 - The dot **clears automatically** when you focus that tab.
 - Powered by the [`pro-vi/wezterm-attention`](https://github.com/pro-vi/wezterm-attention) plugin in `manual` renderer mode.
 - Depends on hooks in `~/.claude/settings.json` that run `~/.claude/wezterm-attention/write-marker.mjs` (writes/removes a per-pane marker file the plugin reads).
