@@ -3,17 +3,18 @@
 Personal WezTerm setup. Highlights of the customizations in `wezterm.lua`:
 
 ## Claude Code attention indicator
-- Shows a colored `●` + tinted background on a tab when a Claude Code session in it needs attention.
+- Shows a colored `●` + tinted background on a tab, by the state of the Claude Code session in it.
 - Colors (Google Material), by state:
+  - **Blue** `#4285F4` (muted) - Claude is working
   - **Yellow** `#FBBC05` (black text) - Claude needs your input
   - **Green** `#34A853` - Claude finished its turn
-  - **Blue** `#4285F4` - working (only if a `PreToolUse` hook is added)
   - **Red** `#EA4335` - manually flagged with `ALT+b`
 - Plays the macOS **Glass** sound when Claude needs input.
-- The dot **clears automatically** when you focus that tab.
+- Yellow and green **clear automatically** when you focus that tab.
 - Powered by the [`pro-vi/wezterm-attention`](https://github.com/pro-vi/wezterm-attention) plugin in `manual` renderer mode.
-- Depends on hooks in `~/.claude/settings.json` that run `~/.claude/wezterm-attention/write-marker.mjs` (writes/removes a per-pane marker file the plugin reads).
 - Polls markers ~4x/sec (`status_update_interval = 250`) so the tab keeps up with the sound.
+- Depends on Claude Code hooks and marker scripts - see [`wezterm-attention/`](wezterm-attention/)
+  for those files, the setup script, and why the "working" state needs a `PostToolUse` hook.
 
 ## Other tweaks
 - Auto light/dark color scheme (iTerm "Default" palette).

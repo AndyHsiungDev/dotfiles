@@ -106,6 +106,12 @@ local key_bindings = {
     action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }),
   },
   {
+    key = "d",
+    mods = "CMD|SHIFT",
+    desc = "Split pane vertically",
+    action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }),
+  },
+  {
     key = "w",
     mods = "CMD",
     desc = "Close current pane",
@@ -161,10 +167,15 @@ table.insert(config.keys, {
   action = keymap_cheatsheet(),
 })
 
--- Claude Code attention dot: shows a red ● beside a tab whose Claude session
--- needs attention (waiting for input, or finished its turn). Driven by per-pane
--- marker files that the Notification/Stop/SessionEnd hooks in ~/.claude/settings.json
--- write; auto-clears when the tab is focused. See github.com/pro-vi/wezterm-attention.
+-- Claude Code attention dot: tints a tab by the state of its Claude session
+-- (working, needs input, or finished its turn) and marks it with a ●. Driven by
+-- per-pane marker files that the hooks in ~/.claude/settings.json write:
+-- UserPromptSubmit and PostToolUse mark "thinking", Notification "notify", Stop
+-- "stop", SessionEnd clears. PostToolUse is what keeps a tab blue for the rest of
+-- a turn after a permission prompt - the notify marker is deleted when you focus
+-- the tab to approve, and nothing else would re-arm "thinking".
+-- Terminal states auto-clear when the tab is focused. See
+-- github.com/pro-vi/wezterm-attention.
 -- Marker plugin runs in "manual" renderer mode so we own the tab-title rendering:
 -- the plugin's built-in renderer only tints the tab background, but we want a
 -- readable foreground per state too. The plugin still polls the per-pane marker

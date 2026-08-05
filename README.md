@@ -7,6 +7,7 @@ Personal configuration files for various tools and applications.
 - **zsh** - Zsh shell configuration with oh-my-zsh, pyenv, nvm, and other tools
 - **vim** - Vim editor configuration
 - **nvim** - Neovim configuration (Lua)
+- **wezterm** - WezTerm terminal configuration, incl. the Claude Code tab attention indicator
 - **hh** - Hstr (command history tool) configuration and installation scripts
 - **raycast** - Raycast app configuration
 
@@ -17,6 +18,7 @@ These dotfiles can be symlinked or copied to their respective locations in your 
 - `zsh/.zshrc` → `~/.zshrc`
 - `vim/.vimrc` → `~/.vimrc`
 - `nvim/` → `~/.config/nvim`
+- `wezterm/wezterm.lua` → `~/.config/wezterm/wezterm.lua` (or run `wezterm/wezterm-attention/install.sh`)
 - `hh/` → `~/dotfiles/hh/` (then source the appropriate config file)
 
 See individual directories for specific setup instructions.
