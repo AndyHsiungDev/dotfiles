@@ -5,11 +5,6 @@ local config = wezterm.config_builder()
 local is_windows = os.getenv("OS") and os.getenv("OS"):lower():find("windows")
 local is_macos = wezterm.target_triple:lower():find("darwin") ~= nil
 
-wezterm.on("gui-startup", function(cmd)
-  local tab, pane, window = wezterm.mux.spawn_window(cmd or {})
-  pane:split({ direction = "Right" })
-end)
-
 -- iTerm "Default" profile equivalent: shared ANSI palette, auto light/dark switch
 local ansi = {
   "#14191e", -- black
@@ -84,6 +79,53 @@ config.inactive_pane_hsb = {
   saturation = 0.0,
   brightness = 0.5,
 }
+
+-- Session save/restore: persists the window/tab/pane layout, each pane's cwd,
+-- and a slice of its scrollback to JSON, then rebuilds it on the next launch.
+-- See github.com/MLFlexer/resurrect.wezterm.
+local resurrect = wezterm.plugin.require("https://github.com/MLFlexer/resurrect.wezterm")
+
+-- Saving is synchronous on the GUI thread: for every local pane the plugin dumps
+-- min(scrollback_rows, max_nlines) lines *with color escapes*, JSON-encodes the
+-- lot, runs a control-char gsub over the whole string, and writes it. The default
+-- cap of 3500 is WezTerm's full default scrollback, which turns each save into a
+-- multi-megabyte stall. 200 lines is enough context to pick up where you left off.
+resurrect.state_manager.set_max_nlines(200)
+
+-- Workspaces only. save_windows/save_tabs would re-walk the same panes and
+-- re-dump their scrollback on every tick, multiplying the cost for no new state.
+resurrect.state_manager.periodic_save({ interval_seconds = 15 * 60, save_workspaces = true })
+
+local function save_workspace()
+  local state = resurrect.workspace_state.get_workspace_state()
+  resurrect.state_manager.save_state(state)
+  -- resurrect_on_gui_startup reads this pointer file to know what to restore.
+  -- Nothing in the plugin writes it, so every save path has to do it itself.
+  resurrect.state_manager.write_current_state(state.workspace, "workspace")
+end
+
+wezterm.on("resurrect.state_manager.periodic_save.finished", function()
+  resurrect.state_manager.write_current_state(wezterm.mux.get_active_workspace(), "workspace")
+end)
+
+-- Restore the last workspace, but only when WezTerm is launched bare: an explicit
+-- `wezterm start -- cmd` should run that command instead.
+--
+-- The window check is load-bearing, not belt-and-braces. resurrect_on_gui_startup
+-- pcalls its body and returns that pcall's success, so a *present but unusable*
+-- pointer file - empty, or naming a state that no longer exists - restores nothing
+-- and still reports success. Trusting the return value there leaves the GUI up with
+-- no window at all. Asking the mux whether a window actually exists is the only
+-- check that covers every way the restore can come up empty.
+wezterm.on("gui-startup", function(cmd)
+  if not cmd then
+    pcall(resurrect.state_manager.resurrect_on_gui_startup)
+  end
+  if #wezterm.mux.all_windows() == 0 then
+    wezterm.mux.spawn_window(cmd or {})
+  end
+end)
+
 -- Single source of truth for custom key bindings. Each entry has a `desc`
 -- so the cheat-sheet (CMD+/) stays in sync automatically.
 local key_bindings = {
@@ -135,6 +177,36 @@ local key_bindings = {
         end
       end),
     }),
+  },
+  {
+    key = "s",
+    mods = "CMD|SHIFT",
+    desc = "Save session state",
+    action = wezterm.action_callback(save_workspace),
+  },
+  {
+    key = "r",
+    mods = "CMD|SHIFT",
+    desc = "Restore session state",
+    action = wezterm.action_callback(function(window, pane)
+      resurrect.fuzzy_loader.fuzzy_load(window, pane, function(id)
+        -- ids look like "workspace/default.json"
+        local state_type = id:match("^([^/]+)")
+        local name = id:match("([^/]+)$"):match("(.+)%..+$")
+        local opts = {
+          relative = true,
+          restore_text = true,
+          on_pane_restore = resurrect.tab_state.default_on_pane_restore,
+        }
+        if state_type == "workspace" then
+          resurrect.workspace_state.restore_workspace(resurrect.state_manager.load_state(name, "workspace"), opts)
+        elseif state_type == "window" then
+          resurrect.window_state.restore_window(pane:window(), resurrect.state_manager.load_state(name, "window"), opts)
+        elseif state_type == "tab" then
+          resurrect.tab_state.restore_tab(pane:tab(), resurrect.state_manager.load_state(name, "tab"), opts)
+        end
+      end)
+    end),
   },
 }
 
