@@ -10,6 +10,7 @@ Personal configuration files for various tools and applications.
 - **wezterm** - WezTerm terminal configuration, incl. the Claude Code tab attention indicator
 - **hh** - Hstr (command history tool) configuration and installation scripts
 - **raycast** - Raycast app configuration
+- **macos/schedules** - `schedules` CLI for managing personal launchd scheduled jobs
 
 ## Usage
 
@@ -20,6 +21,7 @@ These dotfiles can be symlinked or copied to their respective locations in your 
 - `nvim/` → `~/.config/nvim`
 - `wezterm/wezterm.lua` → `~/.config/wezterm/wezterm.lua` (or run `wezterm/wezterm-attention/install.sh`)
 - `hh/` → `~/dotfiles/hh/` (then source the appropriate config file)
+- `macos/schedules/schedules` → `~/.local/bin/schedules` (or run `macos/schedules/install.sh`)
 
 See individual directories for specific setup instructions.
 
