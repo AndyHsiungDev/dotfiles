@@ -9,6 +9,13 @@ vim.opt.textwidth = 80
 vim.opt.showmatch = true
 vim.opt.clipboard = "unnamedplus"
 
+-- Reload buffers from disk when they change externally (e.g. git checkout).
+vim.o.autoread = true
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
+  pattern = "*",
+  command = "if mode() != 'c' | checktime | endif",
+})
+
 -- Leader key (used by some LSP keymaps below). Set before plugins load.
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "

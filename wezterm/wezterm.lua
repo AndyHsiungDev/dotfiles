@@ -232,11 +232,31 @@ local function keymap_cheatsheet()
   })
 end
 
+-- CMD+/ does double duty. In an editor pane it becomes the comment-toggle chord
+-- IDEs use: a terminal cannot transmit CMD, so it is re-sent as CTRL+/, which
+-- nvim maps to `gcc` (see dotfiles/nvim/lua/config/keymaps.lua). Anywhere else it
+-- opens the cheat-sheet.
+--
+-- Matched on the pane's foreground process, so it only applies to an editor
+-- running locally in the pane, not one reached over ssh or inside a multiplexer.
+local editor_programs = { nvim = true, vim = true }
+
+local function cmd_slash()
+  return wezterm.action_callback(function(window, pane)
+    local program = (pane:get_foreground_process_name() or ""):match("[^/\\]+$")
+    if program and editor_programs[program] then
+      window:perform_action(wezterm.action.SendKey({ key = "/", mods = "CTRL" }), pane)
+    else
+      window:perform_action(keymap_cheatsheet(), pane)
+    end
+  end)
+end
+
 config.keys = key_bindings
 table.insert(config.keys, {
   key = "/",
   mods = "CMD",
-  action = keymap_cheatsheet(),
+  action = cmd_slash(),
 })
 
 -- Claude Code attention dot: tints a tab by the state of its Claude session

@@ -27,3 +27,16 @@ end, { desc = "Yank file:line ref" })
 vim.keymap.set("v", "<leader>yl", function()
   yank_ref(true)
 end, { desc = "Yank file:line ref" })
+
+-- IDE-style comment toggle. Neovim has commenting built in as the `gc` operator
+-- (`gcc` for the current line, `gc{motion}`, `gc` over a visual selection); these
+-- mappings just put it on the CMD+/ chord muscle memory expects.
+--
+-- A terminal cannot transmit CMD, so wezterm translates CMD+/ into CTRL+/. That
+-- arrives as <C-_> in legacy encoding and as <C-/> under the kitty keyboard
+-- protocol, so both are bound.
+for _, lhs in ipairs({ "<C-_>", "<C-/>" }) do
+  vim.keymap.set("n", lhs, "gcc", { remap = true, desc = "Toggle comment line" })
+  vim.keymap.set("x", lhs, "gc", { remap = true, desc = "Toggle comment selection" })
+  vim.keymap.set("i", lhs, "<C-o>gcc", { remap = true, desc = "Toggle comment line" })
+end
