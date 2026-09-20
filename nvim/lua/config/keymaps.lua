@@ -40,3 +40,18 @@ for _, lhs in ipairs({ "<C-_>", "<C-/>" }) do
   vim.keymap.set("x", lhs, "gc", { remap = true, desc = "Toggle comment selection" })
   vim.keymap.set("i", lhs, "<C-o>gcc", { remap = true, desc = "Toggle comment line" })
 end
+
+-- Disable the arrow keys in normal, visual, select and operator-pending modes,
+-- so movement goes through hjkl. Insert mode is left alone.
+for _, lhs in ipairs({ "<Up>", "<Down>", "<Left>", "<Right>" }) do
+  vim.keymap.set("", lhs, "<Nop>", { desc = "Disabled: use hjkl" })
+end
+
+-- Delete into the black hole register, leaving the clipboard untouched. Takes a
+-- motion in normal mode (<leader>dw, <leader>d$) and operates on the selection
+-- in visual mode.
+vim.keymap.set({ "n", "x" }, "<leader>d", '"_d', { desc = "Delete (no yank)" })
+
+-- Replace the selection with the clipboard contents without the overwritten
+-- text displacing them.
+vim.keymap.set("x", "<leader>p", '"_dP', { desc = "Paste over (keep clipboard)" })
