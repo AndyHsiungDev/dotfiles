@@ -21,6 +21,11 @@ return {
         },
       },
       pickers = {
+        -- Include dotfiles (e.g. .pre-commit-config.yaml). rg still respects
+        -- .gitignore; the glob keeps the .git directory itself out.
+        find_files = {
+          find_command = { "rg", "--files", "--hidden", "--glob", "!**/.git/*" },
+        },
         -- <C-d> isn't bound to anything in the buffers picker by default
         -- (globally it scrolls the preview), so bind it here to close
         -- the selected buffer without leaving the picker.

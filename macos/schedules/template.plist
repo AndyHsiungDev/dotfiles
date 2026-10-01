@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Template for a personal scheduled job.
+
+  Copy to ~/Library/LaunchAgents/com.andy.<name>.plist and replace every
+  __NAME__ with the job's short name, then:
+
+      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.andy.__NAME__.plist
+
+  StartCalendarInterval fires daily at the Hour/Minute below. Omit Hour to run
+  every hour; add Weekday (0=Sun) for weekly, or Day for monthly. If the Mac is
+  asleep at that time, launchd runs the job once on wake.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.andy.__NAME__</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>$HOME/.claude/scripts/__NAME__/run.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>8</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Required: launchd keeps no output of its own, so a job without these
+         fails silently. `schedules logs <name>` reads them. -->
+    <key>StandardOutPath</key>
+    <string>/Users/andy/.claude/logs/__NAME__.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/andy/.claude/logs/__NAME__.err.log</string>
+</dict>
+</plist>

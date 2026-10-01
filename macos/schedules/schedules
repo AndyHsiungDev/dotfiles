@@ -1,0 +1,364 @@
+#!/usr/bin/python3
+"""Inventory and control personal launchd schedules (com.andy.* LaunchAgents)."""
+
+import os
+import plistlib
+import subprocess
+import sys
+from datetime import datetime, timedelta
+
+AGENT_DIR = os.path.expanduser("~/Library/LaunchAgents")
+# Override to reuse this on a machine where you label agents differently.
+PREFIX = os.environ.get("SCHEDULES_PREFIX", "com.andy.")
+UID = str(os.getuid())
+DOMAIN = "gui/" + UID
+
+RESET, BOLD, DIM = "\033[0m", "\033[1m", "\033[2m"
+GREEN, YELLOW, RED, CYAN = "\033[32m", "\033[33m", "\033[31m", "\033[36m"
+
+
+def color(text, c):
+    return c + text + RESET if sys.stdout.isatty() else text
+
+
+def run(args):
+    p = subprocess.run(args, capture_output=True, text=True)
+    return p.returncode, p.stdout + p.stderr
+
+
+def plist_paths(include_all=False):
+    out = []
+    for name in sorted(os.listdir(AGENT_DIR)):
+        if not name.endswith(".plist"):
+            continue
+        if not include_all and not name.startswith(PREFIX):
+            continue
+        out.append(os.path.join(AGENT_DIR, name))
+    return out
+
+
+def describe_calendar(entry):
+    wd = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    hh, mm = entry.get("Hour"), entry.get("Minute")
+    when = "%02d:%02d" % (hh, mm or 0) if hh is not None else \
+           (":%02d hourly" % mm if mm is not None else "any time")
+    if "Weekday" in entry:
+        return "%s %s" % (wd[entry["Weekday"] % 7], when)
+    if "Day" in entry:
+        return "day %d %s" % (entry["Day"], when)
+    return "daily " + when
+
+
+def schedule_summary(pl):
+    if "StartCalendarInterval" in pl:
+        sci = pl["StartCalendarInterval"]
+        entries = sci if isinstance(sci, list) else [sci]
+        return ", ".join(describe_calendar(e) for e in entries)
+    if "StartInterval" in pl:
+        secs = pl["StartInterval"]
+        if secs % 3600 == 0:
+            return "every %dh" % (secs // 3600)
+        if secs % 60 == 0:
+            return "every %dm" % (secs // 60)
+        return "every %ds" % secs
+    if pl.get("WatchPaths"):
+        return "on file change"
+    if pl.get("RunAtLoad"):
+        return "at load/login"
+    if pl.get("KeepAlive"):
+        return "always on"
+    return "manual only"
+
+
+def next_fire(pl):
+    sci = pl.get("StartCalendarInterval")
+    if not sci:
+        return None
+    entries = sci if isinstance(sci, list) else [sci]
+    now = datetime.now().replace(second=0, microsecond=0)
+    best = None
+    for e in entries:
+        hours = [e["Hour"]] if "Hour" in e else range(24)
+        minutes = [e["Minute"]] if "Minute" in e else range(60)
+        for offset in range(367):
+            d = now.date() + timedelta(days=offset)
+            if "Month" in e and d.month != e["Month"]:
+                continue
+            if "Day" in e and d.day != e["Day"]:
+                continue
+            if "Weekday" in e and (d.weekday() + 1) % 7 != e["Weekday"] % 7:
+                continue
+            found = None
+            for h in hours:
+                for m in minutes:
+                    cand = datetime(d.year, d.month, d.day, h, m)
+                    if cand > now and (found is None or cand < found):
+                        found = cand
+            if found:
+                if best is None or found < best:
+                    best = found
+                break
+    return best
+
+
+def humanize_delta(dt):
+    if dt is None:
+        return "-"
+    delta = dt - datetime.now()
+    mins = int(delta.total_seconds() // 60)
+    if mins < 60:
+        return "in %dm" % max(mins, 0)
+    if mins < 1440:
+        return "in %dh%02dm" % (mins // 60, mins % 60)
+    return "in %dd %dh" % (mins // 1440, (mins % 1440) // 60)
+
+
+def service_info(label):
+    rc, out = run(["launchctl", "print", DOMAIN + "/" + label])
+    if rc != 0:
+        return {"loaded": False}
+    info = {"loaded": True, "running": False, "runs": None, "exit": None}
+    for line in out.splitlines():
+        s = line.strip()
+        if s.startswith("state = "):
+            info["running"] = "running" in s and "not running" not in s
+        elif s.startswith("runs = "):
+            info["runs"] = s.split("=", 1)[1].strip()
+        elif s.startswith("last exit code = "):
+            val = s.split("=", 1)[1].strip()
+            info["exit"] = val if val.lstrip("-").isdigit() else None
+    return info
+
+
+def log_mtime(pl):
+    path = pl.get("StandardOutPath")
+    if not path or not os.path.exists(path):
+        return None
+    return datetime.fromtimestamp(os.path.getmtime(path))
+
+
+def ago(dt):
+    if dt is None:
+        return "never"
+    mins = int((datetime.now() - dt).total_seconds() // 60)
+    if mins < 60:
+        return "%dm ago" % mins
+    if mins < 1440:
+        return "%dh ago" % (mins // 60)
+    return "%dd ago" % (mins // 1440)
+
+
+def load_all(include_all=False):
+    rows = []
+    for path in plist_paths(include_all):
+        try:
+            with open(path, "rb") as fh:
+                pl = plistlib.load(fh)
+        except Exception as exc:
+            rows.append({"label": os.path.basename(path), "broken": str(exc)})
+            continue
+        label = pl.get("Label", os.path.basename(path)[:-6])
+        rows.append({
+            "label": label,
+            "short": label[len(PREFIX):] if label.startswith(PREFIX) else label,
+            "plist": path, "pl": pl, "broken": None,
+            "schedule": schedule_summary(pl),
+            "next": next_fire(pl),
+            "svc": service_info(label),
+            "last": log_mtime(pl),
+        })
+    return rows
+
+
+def status_cell(r):
+    svc = r["svc"]
+    if not svc["loaded"]:
+        return color("disabled", DIM), DIM
+    if svc["running"]:
+        return color("RUNNING", CYAN), CYAN
+    if svc["exit"] not in (None, "0"):
+        return color("failing", RED), RED
+    return color("active", GREEN), GREEN
+
+
+def cmd_list(include_all=False):
+    rows = load_all(include_all)
+    if not rows:
+        print("No %s* LaunchAgents found in %s" % (PREFIX, AGENT_DIR))
+        return 0
+
+    headers = ["NAME", "SCHEDULE", "STATUS", "NEXT RUN", "LAST RUN", "RUNS", "EXIT"]
+    table = []
+    for r in rows:
+        if r["broken"]:
+            table.append([r["label"], "INVALID PLIST", color("broken", RED), "-", "-", "-", "-"])
+            continue
+        svc = r["svc"]
+        nxt = humanize_delta(r["next"]) if svc["loaded"] else "-"
+        table.append([
+            r["short"], r["schedule"], status_cell(r)[0], nxt,
+            ago(r["last"]), svc.get("runs") or "-", svc.get("exit") or "-",
+        ])
+
+    def vlen(s):
+        return len(s.replace(RESET, "").replace(GREEN, "").replace(YELLOW, "")
+                    .replace(RED, "").replace(CYAN, "").replace(DIM, "").replace(BOLD, ""))
+
+    widths = [max(vlen(h), max(vlen(row[i]) for row in table)) for i, h in enumerate(headers)]
+    print()
+    print("  " + "  ".join(color(h.ljust(widths[i]), BOLD) for i, h in enumerate(headers)))
+    print("  " + "  ".join("-" * w for w in widths))
+    for row in table:
+        print("  " + "  ".join(cell + " " * (widths[i] - vlen(cell)) for i, cell in enumerate(row)))
+
+    ok = sum(1 for r in rows if not r["broken"] and r["svc"]["loaded"])
+    off = sum(1 for r in rows if not r["broken"] and not r["svc"]["loaded"])
+    bad = sum(1 for r in rows if r["broken"] or
+              (not r["broken"] and r["svc"].get("exit") not in (None, "0")))
+    parts = ["%d active" % ok]
+    if off:
+        parts.append("%d disabled" % off)
+    if bad:
+        parts.append(color("%d needing attention" % bad, RED))
+    print()
+    print("  %d schedule(s): %s" % (len(rows), ", ".join(parts)))
+    print()
+    return 0
+
+
+def resolve(name):
+    rows = load_all(include_all=True)
+    for r in rows:
+        if r["broken"]:
+            continue
+        if name in (r["label"], r.get("short")):
+            return r
+    sys.stderr.write("No schedule named '%s'. Run 'schedules' to list them.\n" % name)
+    sys.exit(1)
+
+
+def cmd_status(name):
+    r = resolve(name)
+    pl, svc = r["pl"], r["svc"]
+    print()
+    print("  " + color(r["label"], BOLD))
+    print("  plist     %s" % r["plist"])
+    prog = pl.get("ProgramArguments") or [pl.get("Program", "?")]
+    print("  runs      %s" % " ".join(prog))
+    print("  schedule  %s" % r["schedule"])
+    print("  status    %s" % status_cell(r)[0])
+    if svc["loaded"]:
+        nxt = r["next"]
+        print("  next      %s" % (nxt.strftime("%a %Y-%m-%d %H:%M") + " (" + humanize_delta(nxt) + ")" if nxt else "-"))
+        print("  history   %s run(s), last exit code %s" % (svc.get("runs") or "0", svc.get("exit") or "-"))
+    print("  last log  %s" % ago(r["last"]))
+    for key, tag in (("StandardOutPath", "stdout"), ("StandardErrorPath", "stderr")):
+        if pl.get(key):
+            print("  %s    %s" % (tag, pl[key]))
+    print()
+    return 0
+
+
+def cmd_logs(name, follow=False, lines="40"):
+    r = resolve(name)
+    seen, paths = set(), []
+    for key in ("StandardOutPath", "StandardErrorPath"):
+        path = r["pl"].get(key)
+        # A job may point both streams at one file; don't tail it twice.
+        if path and os.path.exists(path) and path not in seen:
+            seen.add(path)
+            paths.append(path)
+    if not paths:
+        print("No log files configured or created yet for %s." % r["label"])
+        return 1
+    args = ["tail"] + (["-f"] if follow else ["-n", lines]) + paths
+    return subprocess.call(args)
+
+
+def cmd_run(name):
+    r = resolve(name)
+    if not r["svc"]["loaded"]:
+        sys.stderr.write("'%s' is disabled. Enable it first: schedules enable %s\n"
+                         % (r["label"], r["short"]))
+        return 1
+    print("Kickstarting %s ..." % r["label"])
+    rc = subprocess.call(["launchctl", "kickstart", "-p", DOMAIN + "/" + r["label"]])
+    if rc == 0:
+        print("Started. Watch output: schedules logs %s -f" % r["short"])
+    return rc
+
+
+def cmd_toggle(name, enable):
+    r = resolve(name)
+    if enable:
+        rc, out = run(["launchctl", "bootstrap", DOMAIN, r["plist"]])
+        verb = "Enabled"
+    else:
+        rc, out = run(["launchctl", "bootout", DOMAIN + "/" + r["label"]])
+        verb = "Disabled"
+    if rc != 0:
+        sys.stderr.write(out.strip() + "\n")
+        return rc
+    print("%s %s" % (verb, r["label"]))
+    return 0
+
+
+def cmd_reload(name):
+    r = resolve(name)
+    run(["launchctl", "bootout", DOMAIN + "/" + r["label"]])
+    rc, out = run(["launchctl", "bootstrap", DOMAIN, r["plist"]])
+    if rc != 0:
+        sys.stderr.write(out.strip() + "\n")
+        return rc
+    print("Reloaded %s (picks up plist edits)" % r["label"])
+    return 0
+
+
+USAGE = """schedules - inventory and control personal launchd schedules
+
+  schedules [list] [--all]   Table of every %s* agent (--all adds vendor agents)
+  schedules status <name>    Detail for one schedule
+  schedules logs <name> [-f] Tail its stdout + stderr
+  schedules run <name>       Trigger it now, off-schedule
+  schedules enable <name>    Load it into launchd
+  schedules disable <name>   Unload it (plist stays on disk)
+  schedules reload <name>    Unload + load, to pick up plist edits
+
+<name> takes either 'weekly-cleanup' or the full 'com.andy.weekly-cleanup'.
+""" % PREFIX
+
+
+def main(argv):
+    if not argv or argv[0] in ("list", "ls"):
+        return cmd_list("--all" in argv)
+    cmd = argv[0]
+    if cmd in ("-h", "--help", "help"):
+        print(USAGE)
+        return 0
+    if cmd == "--all":
+        return cmd_list(True)
+    rest = argv[1:]
+    if cmd in ("status", "show", "info"):
+        return cmd_status(rest[0]) if rest else (print(USAGE) or 1)
+    if cmd in ("logs", "log"):
+        if not rest:
+            print(USAGE)
+            return 1
+        return cmd_logs(rest[0], follow=("-f" in rest or "--follow" in rest))
+    if cmd in ("run", "kickstart", "trigger"):
+        return cmd_run(rest[0]) if rest else (print(USAGE) or 1)
+    if cmd == "enable":
+        return cmd_toggle(rest[0], True) if rest else (print(USAGE) or 1)
+    if cmd == "disable":
+        return cmd_toggle(rest[0], False) if rest else (print(USAGE) or 1)
+    if cmd == "reload":
+        return cmd_reload(rest[0]) if rest else (print(USAGE) or 1)
+    sys.stderr.write("Unknown command '%s'\n\n%s" % (cmd, USAGE))
+    return 1
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except KeyboardInterrupt:
+        sys.exit(130)

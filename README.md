@@ -34,7 +34,7 @@ machine is largely automatic.
 
 - **Neovim 0.11+** (uses the native `vim.lsp.config` / `vim.lsp.enable` API)
 - **git** and **curl** - lazy.nvim and Mason clone/download over these
-- **Node.js** - Mason installs `basedpyright` as an npm package
+- **Python 3** - Mason installs `pyrefly` and `ruff` as pip packages into virtualenvs
 
 ### Steps
 
@@ -48,7 +48,7 @@ machine is largely automatic.
    - bootstrap [lazy.nvim](https://github.com/folke/lazy.nvim) and install the plugins
      pinned in `nvim/lazy-lock.json`
    - use [Mason](https://github.com/williamboman/mason.nvim) to install the language
-     servers listed in `ensure_installed` (`basedpyright` for type checking,
+     servers listed in `ensure_installed` (`pyrefly` for type checking,
      `ruff` for linting) - watch progress with `:Mason`
 
 3. Open a Python file to confirm the LSP attaches (`:LspInfo`).

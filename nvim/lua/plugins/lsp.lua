@@ -1,4 +1,4 @@
--- LSP: basedpyright (type checking + code intelligence) and ruff (linting).
+-- LSP: pyrefly (type checking + code intelligence) and ruff (linting).
 --
 -- Neovim 0.11+ has a native LSP config API (vim.lsp.config / vim.lsp.enable).
 -- nvim-lspconfig ships the base server definitions; Mason installs the
@@ -19,27 +19,26 @@ return {
       end
       vim.lsp.config("*", { capabilities = capabilities })
 
-      -- basedpyright: default to "basic" (its out-of-the-box "recommended"
-      -- mode is extremely strict and noisy for most codebases).
-      vim.lsp.config("basedpyright", {
+      -- pyrefly: type checking + code intelligence. Strictness and search
+      -- paths are configured per project in pyrefly.toml or pyproject.toml.
+      -- "force-on" shows type errors in files not covered by a pyrefly config.
+      vim.lsp.config("pyrefly", {
         settings = {
-          basedpyright = {
-            analysis = {
-              typeCheckingMode = "basic",
-              diagnosticMode = "openFilesOnly",
-              autoImportCompletions = true,
+          python = {
+            pyrefly = {
+              displayTypeErrors = "force-on",
             },
           },
         },
       })
 
-      -- ruff: linting + code actions + import sorting. Let basedpyright own
+      -- ruff: linting + code actions + import sorting. Let pyrefly own
       -- hover so the two servers don't produce duplicate popups.
       vim.lsp.config("ruff", {})
 
       -- Ensure the servers are installed, then enable them.
       require("mason-lspconfig").setup({
-        ensure_installed = { "basedpyright", "ruff" },
+        ensure_installed = { "pyrefly", "ruff" },
         automatic_enable = true,
       })
 
@@ -49,7 +48,7 @@ return {
         callback = function(event)
           local client = vim.lsp.get_client_by_id(event.data.client_id)
           if client and client.name == "ruff" then
-            -- Defer hover to basedpyright.
+            -- Defer hover to pyrefly.
             client.server_capabilities.hoverProvider = false
           end
 

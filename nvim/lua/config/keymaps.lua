@@ -47,6 +47,15 @@ for _, lhs in ipairs({ "<Up>", "<Down>", "<Left>", "<Right>" }) do
   vim.keymap.set("", lhs, "<Nop>", { desc = "Disabled: use hjkl" })
 end
 
+-- Counted j/k moves (e.g. 12j) are not jumps by default, so <C-o> cannot return
+-- from them. Setting the ' mark first records the start position in the
+-- jumplist. Plain j/k without a count are left untouched.
+for _, key in ipairs({ "j", "k" }) do
+  vim.keymap.set("n", key, function()
+    return (vim.v.count > 1 and "m'" .. vim.v.count or "") .. key
+  end, { expr = true, desc = "Move " .. (key == "j" and "down" or "up") .. " (counts add to jumplist)" })
+end
+
 -- Delete into the black hole register, leaving the clipboard untouched. Takes a
 -- motion in normal mode (<leader>dw, <leader>d$) and operates on the selection
 -- in visual mode.
