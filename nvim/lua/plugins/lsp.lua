@@ -1,4 +1,5 @@
--- LSP: pyrefly (type checking + code intelligence) and ruff (linting).
+-- LSP: pyrefly (type checking + code intelligence) and ruff (linting) for
+-- Python, rust-analyzer for Rust.
 --
 -- Neovim 0.11+ has a native LSP config API (vim.lsp.config / vim.lsp.enable).
 -- nvim-lspconfig ships the base server definitions; Mason installs the
@@ -38,7 +39,7 @@ return {
 
       -- Ensure the servers are installed, then enable them.
       require("mason-lspconfig").setup({
-        ensure_installed = { "pyrefly", "ruff" },
+        ensure_installed = { "pyrefly", "ruff", "rust_analyzer" },
         automatic_enable = true,
       })
 
